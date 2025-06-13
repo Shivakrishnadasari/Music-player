@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Music Player</title>
+  <link rel="icon" href="resources/favicon.ico" type="image/x-icon" sizes="96x96" />
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body, html {
+      height: 100%;
+      font-family: sans-serif;
+      background-image: url(resources/gradient-bg.jpg);
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .player {
+      background-color: rgba(22, 13, 42, 0.95);
+      padding: 40px 30px;
+      border-radius: 25px;
+      width: 350px;
+      text-align: center;
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.6);
+    }
+
+    .image {
+      border-radius: 20px;
+      width: 100%;
+      margin-bottom: 20px;
+    }
+
+    #song-title {
+      color: #fff;
+      font-size: 20px;
+      margin-bottom: 15px;
+      text-shadow: 0 0 3px #fff;
+    }
+
+    .progress-container {
+      background: #444;
+      height: 8px;
+      width: 100%;
+      border-radius: 5px;
+      margin-top: 10px;
+      cursor: pointer;
+      box-shadow: 0 0 5px #e91e6388;
+    }
+
+    .progress {
+      background: #e91e63;
+      height: 100%;
+      width: 0%;
+      border-radius: 5px;
+    }
+
+    .time {
+      margin-top: 8px;
+      color: white;
+      font-size: 12px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .buttons {
+      margin-top: 25px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .reverse,
+    .forward {
+      width: 40px;
+      height: 40px;
+      cursor: pointer;
+      margin: 0 15px;
+    }
+
+    .pause {
+      background-color: rgb(185, 28, 120);
+      border-radius: 50%;
+      width: 60px;
+      height: 60px;
+      padding: 10px;
+      box-shadow: 0 0 5px #e91e63aa, 0 0 10px #e91e6388;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="player">
+    <img src="resources/cover-1.jpg" alt="cover" class="image" id="cover-img" />
+    <h3 id="song-title">forest lullaby-11062</h3>
+
+    <div class="progress-container" id="progress-container">
+      <div class="progress" id="progress"></div>
+    </div>
+    <div class="time">
+      <span id="current-time">0:00</span>
+      <span id="duration">0:00</span>
+    </div>
+
+    <div class="buttons">
+      <img src="resources/Stop_and_play_fill-1.svg" alt="prev" class="reverse" id="prevBtn" />
+      <img src="resources/Play_fill.svg" alt="play/pause" class="pause" id="playBtn" />
+      <img src="resources/Stop_and_play_fill_reverse.svg" alt="next" class="forward" id="nextBtn" />
+    </div>
+  </div>
+
+  <script>
+    const songs = [
+      {
+        name: "forest lullaby-11062",
+        cover: "resources/cover-1.jpg",
+        audio: "resources/forest-lullaby-110624.mp3"
+      },
+      {
+        name: "lost in the city lights",
+        cover: "resources/cover-2.jpg",
+        audio: "resources/lost-in-city-lights-145038.mp3"
+      }
+    ];
+
+    let currentSong = 0;
+    let isPlaying = false;
+
+    const playBtn = document.getElementById("playBtn");
+    const prevBtn = document.getElementById("prevBtn");
+    const nextBtn = document.getElementById("nextBtn");
+    const image = document.getElementById("cover-img");
+    const titleEl = document.getElementById("song-title");
+    const progressContainer = document.getElementById("progress-container");
+    const progress = document.getElementById("progress");
+    const currentTimeEl = document.getElementById("current-time");
+    const durationEl = document.getElementById("duration");
+
+    let audio = new Audio(songs[currentSong].audio);
+
+    function loadSong(song) {
+      audio.src = song.audio;
+      image.src = song.cover;
+      titleEl.textContent = song.name;
+    }
+
+    function togglePlay() {
+      if (isPlaying) {
+        audio.pause();
+        playBtn.src = "resources/Play_fill.svg";
+        isPlaying = false;
+      } else {
+        audio.play();
+        playBtn.src = "resources/pause-icon.svg";
+        isPlaying = true;
+      }
+    }
+
+    function nextSong() {
+      currentSong = (currentSong + 1) % songs.length;
+      loadSong(songs[currentSong]);
+      if (isPlaying) audio.play();
+    }
+
+    function prevSong() {
+      currentSong = (currentSong - 1 + songs.length) % songs.length;
+      loadSong(songs[currentSong]);
+      if (isPlaying) audio.play();
+    }
+
+    function formatTime(time) {
+      const mins = Math.floor(time / 60);
+      const secs = Math.floor(time % 60);
+      return `${mins}:${secs < 10 ? "0" + secs : secs}`;
+    }
+
+    function updateProgress() {
+      if (!audio.duration) return;
+      const percent = (audio.currentTime / audio.duration) * 100;
+      progress.style.width = `${percent}%`;
+      currentTimeEl.textContent = formatTime(audio.currentTime);
+      durationEl.textContent = formatTime(audio.duration);
+    }
+
+    progressContainer.addEventListener("click", (e) => {
+      const width = progressContainer.clientWidth;
+      const clickX = e.offsetX;
+      const duration = audio.duration;
+      audio.currentTime = (clickX / width) * duration;
+    });
+
+    audio.addEventListener("timeupdate", updateProgress);
+    audio.addEventListener("loadedmetadata", updateProgress);
+
+    playBtn.addEventListener("click", togglePlay);
+    nextBtn.addEventListener("click", nextSong);
+    prevBtn.addEventListener("click", prevSong);
+
+    loadSong(songs[currentSong]);
+  </script>
+</body>
+</html>
